@@ -1,5 +1,5 @@
 import { requset } from ".";
-import { FilterTaskResponse, ITaskItem } from "../types";
+import { FilterTaskItemResponse, FilterTaskResponse, ITaskItem } from "../types";
 import { TaskUrl } from "./urls";
 
 
@@ -11,7 +11,30 @@ export function fetchAddTask(data:any){
   })
 }
 
-export function fetchFilterTask(data:{taskId:string}){
+export function fetchAddTaskItem(data:any){
+  return requset<FilterTaskResponse>({
+    url:TaskUrl.taskAddItemUrl,
+    method:"Post",
+    data
+  })
+}
+
+/**
+ *
+ * @description 根据 taskId 找到所有任务
+ * @param {object} - { taskId:number }
+ * @return {*} 
+ */
+export function fetchFindAllTaskItem(data:any){
+  return requset<FilterTaskItemResponse>({
+    url:TaskUrl.findAllTaskItemUrl,
+    method:"Post",
+    data
+  })
+}
+
+
+export function fetchFilterTask(data:{taskName:string}){
   return requset<FilterTaskResponse>({
     url:TaskUrl.filterTaskUrl,
     method:"Post",
@@ -27,9 +50,10 @@ export function fetchChangeTaskMarked(data:{id:number,isMarked:boolean}){
   })
 }
 
-export function fetchChangeTaskComplated(data:{id:number,isComplated:boolean}){
+export function fetchChangeTaskStatus(data:
+  Pick<ITaskItem,'isComplated' | 'isMarked' | 'taskItemId'> ){
   return requset<FilterTaskResponse>({
-    url:TaskUrl.changeTaskComplatedUrl,
+    url:TaskUrl.toggleTaskItemStatusUrl,
     method:"Post",
     data
   })
@@ -58,7 +82,7 @@ export function deleteOneTask(data){
 
 export function deleteTaskList(data){
   return requset<any>({
-    url:TaskUrl.deleteTaskListUrl,
+    url:TaskUrl.deleteTaskList,
     method:"Post",
     data
   })

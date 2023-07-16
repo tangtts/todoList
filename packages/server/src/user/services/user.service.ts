@@ -112,35 +112,7 @@ export default class UserService {
     return result.affected;
   }
 
-  /**
-   *
-   * @description 添加侧边栏任务
-   * @param {string} id
-   * @param {TaskItemDTO} todoItem
-   * @memberof UserService
-   */
-  async addTaskItem(userId: number, todoItem: TaskItemDTO) {
 
-    const findUser = await this.userRepository.findOne({
-      where:{userId},
-      relations:["taskList"]
-    });
-  
-    if (!findUser) {
-      throw new NotFoundException("用户不存在！");
-    }
-  
-    const taskListEntity = new TaskListEntity();
-    taskListEntity.taskName = todoItem.txt;
-    taskListEntity.userId = findUser.userId;
-
-    if (findUser.taskList) {
-      findUser.taskList.push(taskListEntity);
-    } else {
-      findUser.taskList = [taskListEntity];
-    }
-    return await this.userRepository.save(findUser);
-  }
   
 
   /**

@@ -96,24 +96,7 @@ export default class UserController {
     return this.userService.update(token, updateUserDTO);
   }
 
-  /**
-   *
-   * @description 添加任务列表
-   * @param {*} req
-   * @param {TaskItemDTO} updateUserDTO
-   * @return {*}
-   * @memberof UserController
-   */
-  @ApiBearerAuth("JWT")
-  @ApiOperation({
-    summary: "添加任务列表",
-  })
-  @Post("addTaskItem")
-  @UseGuards(AuthGuard)
-  addTaskItem(@Request() req, @Body() updateUserDTO: TaskItemDTO) {
-    const token = req.user.id;
-    return this.userService.addTaskItem(token, updateUserDTO);
-  }
+
 
   /**
    *

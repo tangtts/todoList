@@ -1,4 +1,4 @@
-import { UpdateTodoDTO } from './../dtos/todo.update.dto';
+import { UpdateTodoDTO } from "./../dtos/todo.update.dto";
 import { TaskItemDTO } from "./../dtos/task-item.dto";
 import { CreateUserDTO } from "./../dtos/create-user.dto";
 import {
@@ -43,27 +43,47 @@ export default class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @ApiOperation({
-    summary: "新增任务",
+    summary: "新增侧边任务",
   })
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
   @Post("add")
-  add(@Req() req: any, @Body() task: TodoDTO) {
-    return this.taskService.addTask(task);
+  add(@Req() req: any, @Body("taskName") taskName) {
+    return this.taskService.addTask(req.user.id, taskName);
   }
 
-
-  @ApiOperation({
-    summary: "切换todo是否完成",
-  })
+  /**
+   *
+   * @description 添加任务列表
+   * @param {*} req
+   * @param {TaskItemDTO} updateUserDTO
+   * @return {*}
+   */
   @ApiBearerAuth("JWT")
+  @ApiOperation({
+    summary: "添加任务列表",
+  })
+  @Post("addTaskItem")
   @UseGuards(AuthGuard)
-  @Post("changeStatus")
-  changeStatus(
-    @Req() req: any,
-    @Body() task: UpdateTodoDTO
-  ) {
-    return this.taskService.changeStatus(task);
+  addTaskItem(@Request() req, @Body() addToDoDTO: TodoDTO) {
+    return this.taskService.addTaskItem(req.user.id, addToDoDTO);
+  }
+
+  /**
+   *
+   * @description 根据taskId 找到所有的任务列表
+   * @param {*} req
+   * @param {TaskItemDTO} updateUserDTO
+   * @return {*}
+   */
+  @ApiBearerAuth("JWT")
+  @ApiOperation({
+    summary: "找到所有的任务列表",
+  })
+  @Post("findAllTaskItem")
+  @UseGuards(AuthGuard)
+  findAllTaskItem(@Body("taskId") taskId: Number) {
+    return this.taskService.findAllTaskItem(taskId);
   }
 
 
@@ -73,10 +93,9 @@ export default class TaskController {
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
   @Post("filter")
-  filter(@Req() req: any, @Body() task: { taskId: string }) {
-    return this.taskService.filterTask(task);
+  filter(@Req() req: any, @Body("taskName") taskName = "") {
+    return this.taskService.filterTask(taskName);
   }
-
 
   @ApiOperation({
     summary: "获取已经完成的所有任务",
@@ -104,8 +123,8 @@ export default class TaskController {
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
   @Post("deleteOneTask")
-  deleteOneTask(@Req() req: any,@Body() {id}) {
-    return this.taskService.deleteOneTask(req.user.id,id);
+  deleteOneTask(@Body("taskItemId") taskItemId) {
+    return this.taskService.deleteOneTask(taskItemId);
   }
 
   @ApiOperation({
@@ -114,10 +133,30 @@ export default class TaskController {
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
   @Post("deleteTaskList")
-  deleteTaskList(@Req() req: any,@Body() {id}) {
-    return this.taskService.deleteTaskList(req.user.id,id);
+  deleteTaskList(@Body("taskId") taskId) {
+    return this.taskService.deleteTaskList(taskId);
   }
 
+  @ApiOperation({
+    summary: "修改某一组任务",
+  })
+  @ApiBearerAuth("JWT")
+  @UseGuards(AuthGuard)
+  @Post("updateTaskList")
+  updateTaskList(@Request() req, @Body() updateTaskDTO: TaskItemDTO) {
+    const token = req.user.id;
+    return this.taskService.updateTaskList(token, updateTaskDTO);
+  }
 
-
+  @ApiOperation({
+    summary: "修改某一个任务的状态",
+  })
+  @ApiBearerAuth("JWT")
+  @UseGuards(AuthGuard)
+  @Post("toggleTaskItemStatus")
+  toggleTaskItemStatus(@Request() req, @Body() updateUserDTO:
+   any) {
+    const token = req.user.id;
+    return this.taskService.updateTaskItem(token, updateUserDTO);
+  }
 }

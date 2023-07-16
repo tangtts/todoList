@@ -42,6 +42,7 @@ export class TaskListEntity extends CommonEntity {
   // 一个侧边栏有很多小的项目
   @OneToMany(() => TaskEntity, task => task.taskNameList, {
     cascade: true,
+    onDelete:"CASCADE"
   })
   taskItemList: TaskEntity[];
 }

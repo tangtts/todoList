@@ -16,7 +16,7 @@ export class TodoDTO {
   // 自己的id
   @ApiProperty({example:"0"})
   // @Transform((value)=>Number(value))
-  @IsNumberString()
+  @IsNumber()
   taskId:number
 
   @ApiProperty({example:"吃喝玩乐"})

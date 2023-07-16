@@ -1,5 +1,5 @@
 import { LoginParmas, LoginResponse,InfoResponse, TaskListResponse, UpdateParams, TaskResponse } from './../types/index';
-import  {UserUrl} from "./urls"
+import  {TaskUrl, UserUrl} from "./urls"
 import {requset} from ".";
 
 export function fetchLogin(data:LoginParmas){
@@ -27,17 +27,17 @@ export function fetchInfo(){
   })
 }
 
-export function fetchAddTaskItem(data){
+export function fetchAddTask(data){
   return requset<TaskResponse>({
-    url:UserUrl.taskAddItemUrl,
+    url:TaskUrl.addTaskUrl,
     method:"Post",
     data
   })
 }
 
-export function fetchUpdateTaskItem(data){
+export function fetchUpdateTaskList(data){
   return requset<TaskListResponse>({
-    url:UserUrl.taskUpdateItemUrl,
+    url:TaskUrl.taskUpdateListUrl,
     method:"Post",
     data
   })

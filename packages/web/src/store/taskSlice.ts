@@ -5,14 +5,18 @@ export interface CounterState {
   chosenId:number,
   hasDeleteSide:boolean,
   sideNum:number,
-  markedNum:number
+  markedNum:number,
+  deleteSideId:number,
+  hasNewRightItem:boolean
 }
 const initialState: CounterState = {
   sideTxt: "",
   chosenId:0,
   hasDeleteSide:false,
   sideNum:0,
-  markedNum:0
+  markedNum:0,
+  deleteSideId:0,
+  hasNewRightItem:false
 };
 
 export const TaskSlice = createSlice({
@@ -25,18 +29,15 @@ export const TaskSlice = createSlice({
     setChosenId:(state, { payload })=>{
       state.chosenId = payload;
     },
-    deleteSide(state, { payload }){
-      state.hasDeleteSide = payload
+    deleteSideId(state, { payload }){
+      state.deleteSideId = payload
     },
-    setSideNum(state, { payload }){
-      state.sideNum = payload
+    changeRightTxt(state, { payload }){
+      state.hasNewRightItem = payload
     },
-    setMarkedNum(state, { payload }){
-      state.markedNum = payload
-    }
   },
 });
 
-export const { changeSideTxt,setChosenId,deleteSide,setSideNum,setMarkedNum } = TaskSlice.actions;
+export const { changeSideTxt,setChosenId,deleteSideId,changeRightTxt } = TaskSlice.actions;
 
 export default TaskSlice.reducer;

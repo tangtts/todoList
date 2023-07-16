@@ -29,17 +29,24 @@ export class TaskEntity extends CommonEntity {
   taskItemName: string;
 
   // 是否完成
-  @Column("boolean")
+  @Column("boolean",{default:false})
   isComplated: boolean;
   
   // 是否被标记
-  @Column("boolean")
+  @Column("boolean",{default:false})
   isMarked: boolean;
 
   //用户id
   @ManyToOne(()=>UserEntity,(user)=>user.taskItemId)
   userId: number;
 
-  @ManyToOne(()=>TaskListEntity)
+  //taskid
+  @ManyToOne(()=>TaskListEntity,(task)=>task.taskId)
+  taskId: number;
+
+  // 父级元素删除，自己也要跟随删除
+  @ManyToOne(()=>TaskListEntity,{
+    onDelete:"CASCADE"
+  })
   taskNameList:TaskListEntity
 }

@@ -55,18 +55,23 @@ export interface ISideItem {
 }
 
 // 过滤任务
-export type FilterTaskResponse  = CommonResponse<{
-  complatedList:ITaskItem[],
-  unComplatedList:ITaskItem[]
-}> 
+export type FilterTaskResponse  = CommonResponse<ITaskSide[]>; 
 
 
+// 过滤任务
+export type FilterTaskItemResponse  = CommonResponse<ITaskItem[]>; 
+export interface ITaskSide {
+  taskId:number,
+  taskName: string,
+  taskLength:number
+  icon?:React.ReactNode,
+}
 
 
 export interface ITaskItem {
-  _id:number
+  taskItemId:number
   taskId:number,
-  taskName: string,
+  taskItemName: string,
   isComplated: boolean,
   isMarked: boolean,
 }
