@@ -145,7 +145,7 @@ export class TaskService {
     return r.affected == 1
   }
 
-  async deleteTaskList(taskId: number = 1) {
+  async deleteTaskList(taskId: string ) {
     let r = await this.taskListRepository.delete({ taskId });
     return r.affected == 1;
   }

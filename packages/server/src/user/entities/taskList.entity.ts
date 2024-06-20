@@ -22,27 +22,12 @@ import { UserEntity } from "./user.entity";
 @Entity("taskList")
 export class TaskListEntity extends CommonEntity {
   // 所属任务id
-  @PrimaryGeneratedColumn()
-  taskId: number;
-
-  // //用户关联
-  @ManyToOne(()=>UserEntity,(task)=>task.taskList)
-  user: UserEntity;
-
-
-  @Column({nullable: true})
-  userId:number
+  @PrimaryGeneratedColumn("uuid")
+  taskId: string;
 
   //任务名称
   @Column({
-    // unique:true
+    nullable: false
   })
   taskName: string;
-
-  // 一个侧边栏有很多小的项目
-  @OneToMany(() => TaskEntity, task => task.taskNameList, {
-    cascade: true,
-    onDelete:"CASCADE"
-  })
-  taskItemList: TaskEntity[];
 }

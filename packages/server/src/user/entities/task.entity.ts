@@ -42,7 +42,7 @@ export class TaskEntity extends CommonEntity {
 
   //taskid
   @ManyToOne(()=>TaskListEntity,(task)=>task.taskId)
-  taskId: number;
+  taskId: string;
 
   // 父级元素删除，自己也要跟随删除
   @ManyToOne(()=>TaskListEntity,{

@@ -18,8 +18,8 @@ export class TaskItemDTO {
   @IsNotEmpty()
   txt: string;
 
-  @ApiProperty({example:1})
+  @ApiProperty({example:1}) 
   @IsNotEmpty()
-  @IsOptional()
-  taskId:number
+  @IsOptional()  
+  taskId:string
 }

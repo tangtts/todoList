@@ -1,8 +1,6 @@
 import React from "react";
 import { Button, Typography, Col, Form, Input, Row } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"
-// import a from ""
 import { LoginParmas } from "../types";
 import { fetchLogin } from "../request/user";
 import { AlertTwoTone, LockOutlined, UserOutlined } from "@ant-design/icons";
@@ -96,7 +94,6 @@ const Login: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
-
       </div>
     </div>
   );

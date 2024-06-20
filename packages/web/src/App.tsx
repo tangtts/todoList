@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Button, Space } from 'antd';
-import Home from './pages/home';
 import React from 'react';
 import Login from './pages/login';
 import { CSSTransition, TransitionGroup, SwitchTransition } from "react-transition-group"
-import { BrowserRouter as Router, Outlet, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Outlet, Route, useLocation, useRoutes } from 'react-router-dom';
+import IndexPage from './pages';
+
+
 function App() {
   const location = useLocation()
   return (
@@ -20,11 +20,20 @@ function App() {
 
 
 function Page() {
-  const token = localStorage.getItem("token")
-  return (<>
-    {token ? <Outlet /> : <Login />}
-  </>
-  )
+  const hasToken = localStorage.getItem("token");
+  const route = useLocation();
+  // 有 token 但是去 登录注册页
+  if (hasToken && ['/login', '/register'].includes(route.pathname)) {
+    return <IndexPage />
+    // 没有 token 但是去登录注册页
+  } else if (!hasToken && ['/login', '/register'].includes(route.pathname)) {
+    return <Outlet />
+    // 有token 但是去其他页
+  }else if(hasToken && !['/login', '/register'].includes(route.pathname)){
+    return <Outlet />
+  } else {
+    return <Login />
+  }
 }
 
 export default App

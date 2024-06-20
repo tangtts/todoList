@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import Search from "antd/es/input/Search";
-import { Divider, Dropdown, Input, MenuProps, message } from "antd";
+import { Divider, Dropdown, Input, InputRef, MenuProps, message } from "antd";
 import { ISideItem, ITaskItem, ITaskSide } from "../types";
 import { ArrowDownOutlined, ArrowRightOutlined, CalendarTwoTone, CheckCircleOutlined, ClockCircleOutlined, PlusOutlined, StarFilled, StarOutlined, ToolFilled } from "@ant-design/icons";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
@@ -13,6 +13,19 @@ import {
 type ISideChoose = Pick<ITaskSide, 'taskId' | "taskName">
 const IndexPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
+
+  // 初始化
+  const init = () => {
+    fetchTaskList()
+    fetchComplatedList()
+    fetchMarkedList()
+  }
+
+  useEffect(() => {
+    init()
+  }, [])
+
+
   // 侧边
   const [sideList, setSideList] = useState<ITaskSide[]>([]);
 
@@ -21,8 +34,6 @@ const IndexPage = () => {
   const [doneData, setDoneData] = useState<ITaskItem[]>([])
 
   const [chooseTask, setChooseTask] = useState<ISideChoose>();
-  // 是否是修改状态
-  const [isEdit, setEditStatus] = useState(true)
   // 在标记的时候不需要使用动画
   const [useAnimate, setUseAnimate] = useState<boolean>(true)
   const [complatedCount, setComplatedCount] = useState<number>(0)
@@ -34,6 +45,10 @@ const IndexPage = () => {
 
   // 已完成 汉字翻转
   const [isFold, setFold] = useState(false)
+  // 每一个side 的输入框
+  const inputRef = useRef<InputRef>(null)
+  // 侧边输入框状态
+  const [sideInputStatus, setSideInputStatus] = useState(false)
 
   const menuSide: MenuProps['items'] = [
     {
@@ -51,22 +66,15 @@ const IndexPage = () => {
    * 查询侧边任务
    * @param {string} [taskName='']
    */
-  function searchTask(taskName = '') {
+  function fetchTaskList(taskName = '') {
     fetchFilterTask({ taskName }).then(res => {
       if (res.code == 200) {
         setSideList(res.data)
       }
     });
   }
-  const init = () => {
-    searchTask()
-    getAllComplated()
-    getAllMarked()
-  }
 
-  useEffect(() => {
-    init()
-  }, [])
+
 
   const handleMenuClick = (e, taskId) => {
     if (e.key == 1) {
@@ -74,6 +82,11 @@ const IndexPage = () => {
         if (res.code == 200) {
           init()
         }
+      })
+    } else if (e.key == 2) {
+      setSideInputStatus(true)
+      inputRef.current?.focus({
+        cursor: 'end'
       })
     }
   }
@@ -97,7 +110,7 @@ const IndexPage = () => {
     fetchAddTask(o).then(res => {
       if (res.code == 200) {
         // 重新调一次获取所有侧边
-        searchTask()
+        fetchTaskList()
       }
     });
   };
@@ -159,7 +172,7 @@ const IndexPage = () => {
   }, [
     chooseTask?.taskId
   ])
-  
+
   /**
   * @description 根据id获取对应的最新右边task
   */
@@ -194,7 +207,7 @@ const IndexPage = () => {
           // 获取最新的任务列表
           getFilterTask()
           // 更新侧边
-          searchTask()
+          fetchTaskList()
           // 更新侧边栏
           setTaskName('')
         }
@@ -202,27 +215,22 @@ const IndexPage = () => {
     }
   }
 
-  const getAllComplated = (isClick= false) => {
-    if(isClick){
-      fetchComplatedTask().then(res => {
-        setChooseTask({
-          taskId: 1,
-          taskName: "完成"
-        })
-        setToDoData([])
-        setDoneData(res.data.tasks)
-        setComplatedCount(res.data.total)
+  const fetchComplatedList = () => {
+    // 应该初始化是完成
+    fetchComplatedTask().then(res => {
+      setChooseTask({
+        taskId: 1,
+        taskName: "完成"
       })
-    }else {
-      fetchComplatedTask().then(res => {
-        setComplatedCount(res.data.total)
-      })
-    }
-   
+      // 当点击完成时，todoData清空
+      setToDoData([])
+      setDoneData(res.data.tasks)
+      setComplatedCount(res.data.total)
+    })
   }
 
-  const getAllMarked = (isClick = false) => {
-    if(isClick){
+  const fetchMarkedList = (isClick = false) => {
+    if (isClick) {
       fetchMarkedTask().then(res => {
         setChooseTask({
           taskId: 2,
@@ -232,19 +240,22 @@ const IndexPage = () => {
         setDoneData(res.data.tasks)
         setMarkedCount(res.data.total)
       })
-    }else {
+    } else {
       fetchMarkedTask().then(res => {
         setMarkedCount(res.data.total)
       })
     }
-
-
-    
   }
 
 
+  const blur = (e: React.FocusEvent<HTMLInputElement, Element>, todo: ISideChoose) => {
+    setSideInputStatus(false)
+    console.log(e.target.value, todo.taskId)
+  }
 
-
+  const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    setSideInputStatus(true)
+  }
 
   return (
     <div className="h-full flex">
@@ -253,11 +264,12 @@ const IndexPage = () => {
           placeholder="input search text"
           size="large"
           allowClear
-          onSearch={(taskName) => searchTask(taskName)}
+          onSearch={(taskName) => fetchTaskList(taskName)}
         />
         <Divider className="divider"></Divider>
-        <div>
 
+        <div>
+          {/* 已完成 */}
           <div className="side"
             style={{
               backgroundColor:
@@ -265,7 +277,7 @@ const IndexPage = () => {
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
             }}
-            onClick={()=>getAllComplated(true)}
+            onClick={()=>fetchComplatedList()}
           >
             <div className="w-[4px] h-4/5 mr-2 bg-blue-300 rounded-md"></div>
             <div className="flex items-center">
@@ -276,7 +288,7 @@ const IndexPage = () => {
               {complatedCount}</span>
           </div>
 
-
+          {/* 标记 */}
           <div className="side"
             style={{
               backgroundColor:
@@ -284,7 +296,7 @@ const IndexPage = () => {
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
             }}
-            onClick={()=>getAllMarked(true)}
+            onClick={() => fetchMarkedList(true)}
           >
             <div className="w-[4px] h-4/5 mr-2 bg-blue-300 rounded-md"></div>
             <div className="flex items-center">
@@ -294,8 +306,10 @@ const IndexPage = () => {
             <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
               {markedCount}</span>
           </div>
-          <Divider className="divider"></Divider>
 
+
+          <Divider className="divider"></Divider>
+          {/* 任务列表 */}
           <div>
             <TransitionGroup>
               {sideList?.map(todo => (
@@ -324,7 +338,11 @@ const IndexPage = () => {
                         </div>
                         <div className="flex items-center">
                           <CalendarTwoTone />
-                          <p className="ml-4">{todo.taskName}</p>
+                          {
+                            sideInputStatus
+                              ? <Input defaultValue={todo.taskName} onPressEnter={(e) => enter(e)} onBlur={(e) => blur(e, todo)} ref={inputRef}></Input>
+                              : <p className="ml-4">{todo.taskName}</p>
+                          }
                         </div>
                         <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
                           {todo.taskLength}</span>
@@ -336,7 +354,7 @@ const IndexPage = () => {
               ))}
             </TransitionGroup>
           </div>
-
+          {/* 尾部 */}
           <div
             className="addList"
             onClick={addList}>
@@ -345,6 +363,7 @@ const IndexPage = () => {
           </div>
         </div>
       </div>
+      {/* 右侧 */}
       <div className="flex-1">
         {contextHolder}
         <div className="bg-[#5f73c1] p-8 flex flex-col h-full rounded-md">
@@ -460,7 +479,6 @@ const IndexPage = () => {
             </footer>
           }
         </div>
-
       </div>
     </div>
   )

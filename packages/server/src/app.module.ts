@@ -9,15 +9,15 @@ import { TaskEntity } from './user/entities/task.entity';
 import { TaskListEntity } from './user/entities/taskList.entity';
 
 @Module({
-  imports: [
+  imports: [ 
     UserModule,
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRoot({
       type: "mysql",
-      host: "localhost",
+      host: "127.0.0.1",
       port: 3306,
       username: "root",
-      password: "root",
+      password: "123456",
       database: "todo",
       entities: [UserEntity,TaskEntity,TaskListEntity],
       synchronize: true,
