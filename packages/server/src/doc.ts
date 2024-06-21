@@ -10,7 +10,7 @@ export const generateDocument = (app: INestApplication) => {
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, // 允许token 验证
       'JWT',
-      )
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

@@ -34,10 +34,10 @@ export function fetchFindAllTaskItem(data:any){
 }
 
 
-export function fetchFilterTask(data:{taskName:string}){
+export function fetchAllTask(data:{taskName:string}){
   return requset<FilterTaskResponse>({
-    url:TaskUrl.filterTaskUrl,
-    method:"Post",
+    url:TaskUrl.getAllTask,
+    method:"Get",
     data
   })
 }
@@ -51,7 +51,7 @@ export function fetchChangeTaskMarked(data:{id:number,isMarked:boolean}){
 }
 
 export function fetchChangeTaskStatus(data:
-  Pick<ITaskItem,'isComplated' | 'isMarked' | 'taskItemId'> ){
+  Pick<ITaskItem,'isComplated' | 'isMarked' | 'id'> ){
   return requset<FilterTaskResponse>({
     url:TaskUrl.toggleTaskItemStatusUrl,
     method:"Post",

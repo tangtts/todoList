@@ -19,7 +19,7 @@ export namespace TaskUrl{
   export const taskUpdateListUrl = 'task/updateTaskList'
 
   export const taskAddItemUrl = 'task/addTaskItem'
-  export const filterTaskUrl =  'task/filter'
+  export const getAllTask =  'task/getAllTask'
   export const changeTaskMarkedUrl =  'task/mark'
   export const toggleTaskItemStatusUrl =  'task/toggleTaskItemStatus'
   export const getComplatedUrl =  'task/getAllComplated'

@@ -1,4 +1,3 @@
-import { TaskItemDTO } from "./../dtos/task-item.dto";
 import { CreateUserDTO } from "./../dtos/create-user.dto";
 import {
   Body,
@@ -13,8 +12,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  Request,
-  Query,
+  Request
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -41,10 +39,11 @@ import * as fs from 'fs';
 import * as path from "path";
 import { log } from "console";
 import { join } from "path";
+
 @ApiTags("用户模块")
 @Controller("user")
 export default class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @ApiOperation({
     summary: "用户注册",
@@ -96,46 +95,7 @@ export default class UserController {
     return this.userService.update(token, updateUserDTO);
   }
 
-
-
-  /**
-   *
-   * @desription 修改任务列表
-   * @param {*} req
-   * @param {TaskItemDTO} updateUserDTO
-   * @return {*}
-   * @memberof UserController
-   */
-  @ApiBearerAuth("JWT")
-  @ApiOperation({
-    summary: "修改任务列表",
-  })
-  @Post("updateTaskItem")
-  @UseGuards(AuthGuard)
-  updateTaskItem(@Request() req, @Body() updateUserDTO: TaskItemDTO) {
-    const token = req.user.id;
-    return this.userService.updateTaskItem(token, updateUserDTO);
-  }
-
-  /**
-   *
-   * @desription 修改任务列表
-   * @param {*} req
-   * @param {TaskItemDTO} updateUserDTO
-   * @return {*}
-   * @memberof UserController
-   */
-  @ApiBearerAuth("JWT")
-  @ApiOperation({
-    summary: "获取任务列表",
-  })
-  @Post("searchTaskItem")
-  @UseGuards(AuthGuard)
-  searchTaskItem(@Request() req, @Body() searchUserDTO: SearchUserDTO) {
-    const token = req.user.id;
-    return this.userService.searchTask(token, searchUserDTO);
-  }
-
+  
   @ApiOperation({
     summary: "上传头像",
   })
@@ -147,13 +107,8 @@ export default class UserController {
   async upload(
     @Req() req: UploadDTO,
     @Body() uploadDTO: UploadDTO,
-    @UploadedFile() file
+    @UploadedFile() file:Express.Multer.File
   ) {
-  //   const a = path.join("")
-  // let r =  path.join(process.cwd(), "my-uploads") + req.file.filename
-  // console.log(r)
-  //   return req.file
-    // console.log(req.file,"fa",uploadDTO.name)
     return await this.userService.uploadAvatar(file);
   }
 }

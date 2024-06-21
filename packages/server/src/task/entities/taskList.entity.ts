@@ -16,14 +16,12 @@ import {
   OneToMany,
   ManyToOne,
 } from "typeorm";
-import { TaskEntity } from "./task.entity";
-import { UserEntity } from "./user.entity";
 
-@Entity("taskList")
+@Entity("task_list")
 export class TaskListEntity extends CommonEntity {
   // 所属任务id
-  @PrimaryGeneratedColumn("uuid")
-  taskId: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   //任务名称
   @Column({

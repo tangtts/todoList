@@ -10,26 +10,18 @@ import {
   ClassSerializerInterceptor,
   UseInterceptors,
 } from "@nestjs/common";
-import { getRepository, Like, MongoRepository, ObjectID } from "typeorm";
+import {  Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { encrytPassword, makeSalt } from "src/shared/utils/cryptogram.util";
 import { LoginDTO } from "../dtos/login-user.dto";
 import { JwtService } from "@nestjs/jwt";
 import { UploadService } from "src/shared/upload/upload.service";
-import { deleteProperty } from "src/shared/utils/deleteNoUserdProperty";
-import { TaskItemDTO } from "../dtos/task-item.dto";
-import { TaskEntity } from "../entities/task.entity";
-import { TaskListEntity } from "../entities/taskList.entity";
+
 @Injectable()
 export default class UserService {
   constructor(
     @InjectRepository(UserEntity)
-    private readonly userRepository: MongoRepository<UserEntity>,
-    @InjectRepository(TaskEntity)
-    private readonly taskRepository: MongoRepository<TaskEntity>,
-
-    @InjectRepository(TaskListEntity)
-    private readonly taskListRepository: MongoRepository<TaskListEntity>,
+    private readonly userRepository: Repository<UserEntity>,
     
     private readonly jwtService: JwtService,
     private readonly uploadService: UploadService
@@ -83,7 +75,7 @@ export default class UserService {
    * @param {string} id - 用户 ID
    * @return {{Promise<UserEntity>}} 用户信息
    */
-  async info(userId: string) {
+  async info(userId: number) {
     //始终为 1
     let r = null;
     try {
@@ -112,46 +104,6 @@ export default class UserService {
     return result.affected;
   }
 
-
-  
-
-  /**
-   *
-   * @description 修改侧边栏任务
-   * @param {string} id
-   * @param {TaskItemDTO} todoItem
-   * @memberof UserService
-   */
-  //  TaskItemDTO & {itemId:number}
-  async updateTaskItem(userId: number, todoItem:TaskItemDTO ) {
-    const findUser = await this.userRepository.findOne({
-      where:{userId},
-      relations:["taskList"]
-    });
-  
-    if (!findUser) {
-      throw new NotFoundException("用户不存在！");
-    }
-  
-    // 先找到对应的todoItem 的某一项
-     findUser.taskList.forEach(task=>{
-      if(task.taskId == todoItem.taskId){
-        task.taskName = todoItem.txt;
-      }
-    })
-    return await this.userRepository.save(findUser);
-  }
-
-  async searchTask(userId: number, searchUserDTO: SearchUserDTO) {
-   let taskList =  await this.taskListRepository.find({
-      where:{
-        userId,
-        taskName:Like(`%${searchUserDTO.taskName}%`)
-      }
-    })
-    return taskList;
-  }
-
   /**
    *
    *
@@ -166,11 +118,11 @@ export default class UserService {
   /**
    *
    * @description 上传图片，返回本地图片链接
-   * @param {*} file
+   * @param {Express.Multer.File} file
    * @return {object} {data:图片url}
    * @memberof UserService
    */
-  async uploadAvatar(file) {
+  async uploadAvatar(file:Express.Multer.File) {
     const { url } = await this.uploadService.upload(file);
     return { path: "http://localhost:3000" + url };
   }

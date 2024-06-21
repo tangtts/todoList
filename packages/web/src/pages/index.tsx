@@ -8,9 +8,9 @@ import {
   deleteTaskList,
   fetchAddTask,
   fetchChangeTaskMarked, fetchChangeTaskStatus, fetchComplatedTask,
-  fetchMarkedTask, deleteOneTask, fetchAddTaskItem, fetchFindAllTaskItem, fetchFilterTask
+  fetchMarkedTask, deleteOneTask, fetchAddTaskItem, fetchFindAllTaskItem, fetchAllTask
 } from "../request/task"
-type ISideChoose = Pick<ITaskSide, 'taskId' | "taskName">
+type ISideChoose = Pick<ITaskSide, 'id' | "taskName">
 const IndexPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -41,7 +41,7 @@ const IndexPage = () => {
 
 
   // 输入框的任务名
-  const [taskName, setTaskName] = useState('')
+  const [taskItemName, setItemTaskName] = useState('')
 
   // 已完成 汉字翻转
   const [isFold, setFold] = useState(false)
@@ -67,7 +67,7 @@ const IndexPage = () => {
    * @param {string} [taskName='']
    */
   function fetchTaskList(taskName = '') {
-    fetchFilterTask({ taskName }).then(res => {
+    fetchAllTask({ taskName }).then(res => {
       if (res.code == 200) {
         setSideList(res.data)
       }
@@ -97,7 +97,9 @@ const IndexPage = () => {
    * @param {ISideChoose} task
    */
   const menuClick = (task: ISideChoose) => {
+    console.log("🚀 ~ menuClick ~ task:", task);
     setChooseTask(task)
+    getFilterTask()
   }
 
 
@@ -117,8 +119,8 @@ const IndexPage = () => {
 
 
   function checkShouldOperate() {
-    if (chooseTask?.taskId) {
-      return ![1, 2].includes(chooseTask?.taskId)
+    if (chooseTask?.id) {
+      return ![1, 2].includes(chooseTask?.id)
     }
     return true
   }
@@ -148,19 +150,18 @@ const IndexPage = () => {
    * @param {ITaskItem} chosenItem
    */
   const changeStatus = (
-    chosenItem: Pick<ITaskItem, 'isComplated' | 'isMarked' | 'taskItemId'>,
+    chosenItem: Pick<ITaskItem, 'isComplated' | 'isMarked' | 'id'>,
     type: "complated" | 'marked'
   ) => {
-    if (!checkShouldOperate()) return
+    // if (!checkShouldOperate()) return
     setUseAnimate(true)
     fetchChangeTaskStatus({
-      taskItemId: chosenItem.taskItemId,
+      id: chosenItem.id,
       isComplated: type == "complated" ? !chosenItem.isComplated : chosenItem.isComplated,
       isMarked: type == "marked" ? !chosenItem.isMarked : chosenItem.isMarked,
     }).then(res => {
       if (res.code == 200) {
         getFilterTask()
-        init()
       }
     })
   }
@@ -170,15 +171,16 @@ const IndexPage = () => {
       getFilterTask()
     }
   }, [
-    chooseTask?.taskId
+    chooseTask?.id
   ])
 
   /**
   * @description 根据id获取对应的最新右边task
   */
   const getFilterTask = () => {
-    if (!chooseTask?.taskId) return;
-    fetchFindAllTaskItem({ taskId: chooseTask.taskId }).then(res => {
+    console.log("🚀 ~ getFilterTask ~ chooseTask:", chooseTask);
+    if (!chooseTask?.id) return;
+    fetchFindAllTaskItem({ taskId: chooseTask.id }).then(res => {
       if (res.code == 200) {
         const data = res.data;
         setToDoData(data.filter(item => !item.isComplated))
@@ -191,25 +193,26 @@ const IndexPage = () => {
  * @description 新增任务
  */
   const addTaskItem = () => {
-    if (!taskName.trim()) {
+    if (!taskItemName.trim()) {
       return messageApi.open({
         type: 'warning',
         content: '请输入任务名称！',
       });
     }
 
-    if (chooseTask?.taskId) {
+    if (chooseTask?.id) {
       fetchAddTaskItem({
-        taskName,
-        taskId: chooseTask?.taskId
+        taskItemName,
+        taskId: chooseTask?.id
       }).then(res => {
         if (res.code == 200) {
           // 获取最新的任务列表
           getFilterTask()
+          
           // 更新侧边
           fetchTaskList()
           // 更新侧边栏
-          setTaskName('')
+          setItemTaskName('')
         }
       })
     }
@@ -219,7 +222,7 @@ const IndexPage = () => {
     // 应该初始化是完成
     fetchComplatedTask().then(res => {
       setChooseTask({
-        taskId: 1,
+        id: 1,
         taskName: "完成"
       })
       // 当点击完成时，todoData清空
@@ -233,7 +236,7 @@ const IndexPage = () => {
     if (isClick) {
       fetchMarkedTask().then(res => {
         setChooseTask({
-          taskId: 2,
+          id: 2,
           taskName: "标记"
         })
         setToDoData([])
@@ -250,7 +253,6 @@ const IndexPage = () => {
 
   const blur = (e: React.FocusEvent<HTMLInputElement, Element>, todo: ISideChoose) => {
     setSideInputStatus(false)
-    console.log(e.target.value, todo.taskId)
   }
 
   const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -273,11 +275,11 @@ const IndexPage = () => {
           <div className="side"
             style={{
               backgroundColor:
-                chooseTask?.taskId == 1 ?
+                chooseTask?.id == 1 ?
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
             }}
-            onClick={()=>fetchComplatedList()}
+            onClick={() => fetchComplatedList()}
           >
             <div className="w-[4px] h-4/5 mr-2 bg-blue-300 rounded-md"></div>
             <div className="flex items-center">
@@ -292,7 +294,7 @@ const IndexPage = () => {
           <div className="side"
             style={{
               backgroundColor:
-                chooseTask?.taskId == 2 ?
+                chooseTask?.id == 2 ?
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
             }}
@@ -312,22 +314,22 @@ const IndexPage = () => {
           {/* 任务列表 */}
           <div>
             <TransitionGroup>
-              {sideList?.map(todo => (
+              {sideList?.map((todo,index) => (
                 <CSSTransition
-                  key={todo.taskId}
+                  key={index}
                   timeout={500}
                   classNames="translateY">
                   <>
                     <Dropdown
                       menu={{
                         items: menuSide,
-                        onClick: (e) => handleMenuClick(e, todo.taskId)
+                        onClick: (e) => handleMenuClick(e, todo.id)
                       }}
                       trigger={['contextMenu']}>
                       <div className="side"
                         style={{
                           backgroundColor:
-                            chooseTask?.taskId == todo.taskId ?
+                            chooseTask?.id == todo.id ?
                               'rgb(96 165 250)' :
                               "rgb(191,219,254)"
                         }}
@@ -345,7 +347,7 @@ const IndexPage = () => {
                           }
                         </div>
                         <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
-                          {todo.taskLength}</span>
+                          {todo.count}</span>
                       </div>
                     </Dropdown>
                     <Divider className="divider"></Divider>
@@ -473,8 +475,8 @@ const IndexPage = () => {
           </main>
           {
             <footer className="mt-auto">
-              <Input size="large" value={taskName}
-                onChange={(e) => setTaskName(e.target.value)}
+              <Input size="large" value={taskItemName}
+                onChange={(e) => setItemTaskName(e.target.value)}
                 onPressEnter={addTaskItem}></Input>
             </footer>
           }

@@ -61,16 +61,16 @@ export type FilterTaskResponse  = CommonResponse<ITaskSide[]>;
 // 过滤任务
 export type FilterTaskItemResponse  = CommonResponse<ITaskItem[]>; 
 export interface ITaskSide {
-  taskId:number,
+  id:number,
   taskName: string,
-  taskLength:number
+  count:number
   icon?:React.ReactNode,
 }
 
 
 export interface ITaskItem {
   taskItemId:number
-  taskId:number,
+  id:number,
   taskItemName: string,
   isComplated: boolean,
   isMarked: boolean,

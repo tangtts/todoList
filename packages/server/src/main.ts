@@ -11,9 +11,6 @@ async function bootstrap() {
   generateDocument(app);
   const uploadDir =
     process.env.UPLOAD_DIR ?? join(__dirname, "..", "static/upload");
-
-    console.log(123312);
-    
   // 静态服务
   app.useStaticAssets(uploadDir, {
     prefix: "/static/upload",

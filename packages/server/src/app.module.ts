@@ -1,16 +1,25 @@
 import { Module } from '@nestjs/common';
 import {UserModule} from './user/user.module';
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configModuleOptions } from './configs/module-options';
-import { DataSourceOptions } from 'typeorm';
 import { UserEntity } from './user/entities/user.entity';
-import { TaskEntity } from './user/entities/task.entity';
-import { TaskListEntity } from './user/entities/taskList.entity';
+import { TaskListEntity } from './task/entities/taskList.entity';
+import { TaskModule } from './task/task.module';
+import { TaskItemEntity } from './task/entities/item.entity';
+import { TaskListItemEntity } from './task/entities/task_item';
+import { UserTaskEntity } from './task/entities/user_task.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [ 
     UserModule,
+    TaskModule,
+   JwtModule.register({
+    global:true,
+    secret: 'secret', // 密钥
+    signOptions: { expiresIn: '30d' } // 过期时间
+   }),
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRoot({
       type: "mysql",
@@ -18,12 +27,18 @@ import { TaskListEntity } from './user/entities/taskList.entity';
       port: 3306,
       username: "root",
       password: "123456",
+      logging:false,
       database: "todo",
-      entities: [UserEntity,TaskEntity,TaskListEntity],
+      entities: [
+        UserEntity,
+        TaskListEntity,
+        TaskItemEntity,
+        TaskListItemEntity,
+        UserTaskEntity
+      ],
       synchronize: true,
     }),
   ], 
-  
   controllers: [],
   providers: [], 
 })

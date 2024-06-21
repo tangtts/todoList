@@ -1,6 +1,3 @@
-import { UpdateTodoDTO } from "./../dtos/todo.update.dto";
-import { TaskItemDTO } from "./../dtos/task-item.dto";
-import { CreateUserDTO } from "./../dtos/create-user.dto";
 import {
   Body,
   Controller,
@@ -27,20 +24,19 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import UserService from "../services/user.service";
-import { LoginDTO } from "../dtos/login-user.dto";
 import { AuthGuard } from "src/shared/guard/auth.guard";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { UploadDTO } from "../dtos/upload.dto";
-import { UpdateUserDTO } from "../dtos/update-user.dto";
-import { SearchUserDTO } from "../dtos/search-user.dto";
 import { TaskService } from "../services/task.service";
-import { TodoDTO } from "../dtos/todo.dto";
+import { TodoItemDTO } from "../dtos/Item.dto";
+import { UpdateTodoDTO } from "../dtos/todo.update.dto";
+import { TaskListItemDTO } from "../dtos/taskListItem.dto";
+import { UpdateTaskListItemDTO } from "../dtos/taskListItem.update.dto";
+
 
 @ApiTags("任务模块")
 @Controller("task")
 export default class TaskController {
-  constructor(private readonly taskService: TaskService) {}
+  constructor(private readonly taskService: TaskService) { }
 
   @ApiOperation({
     summary: "新增侧边任务",
@@ -51,6 +47,8 @@ export default class TaskController {
   add(@Req() req: any, @Body("taskName") taskName) {
     return this.taskService.addTask(req.user.id, taskName);
   }
+
+ 
 
   /**
    *
@@ -65,36 +63,47 @@ export default class TaskController {
   })
   @Post("addTaskItem")
   @UseGuards(AuthGuard)
-  addTaskItem(@Request() req, @Body() addToDoDTO: TodoDTO) {
+  addTaskItem(@Request() req, @Body() addToDoDTO: TodoItemDTO) {
     return this.taskService.addTaskItem(req.user.id, addToDoDTO);
   }
 
   /**
    *
-   * @description 根据taskId 找到所有的任务列表
-   * @param {*} req
-   * @param {TaskItemDTO} updateUserDTO
+   * @description 根据taskId 找到所有的任务项目
+   * @param {number} taskId
    * @return {*}
    */
   @ApiBearerAuth("JWT")
   @ApiOperation({
-    summary: "找到所有的任务列表",
+    summary: "找到所有的任务列表根据taskid",
   })
   @Post("findAllTaskItem")
   @UseGuards(AuthGuard)
-  findAllTaskItem(@Body("taskId") taskId: Number) {
+  findAllTaskItem(@Body("taskId") taskId: number) {
     return this.taskService.findAllTaskItem(taskId);
+  }
+
+  @ApiBearerAuth("JWT")
+  @ApiOperation({
+    summary: "获取任务列表根据查询条件",
+  })
+  @Post("searchTaskItem")
+  @UseGuards(AuthGuard)
+  searchTaskItem(@Request() req, @Body("taskName") taskName: string) {
+    const token = req.user.id;
+    return this.taskService.searchTask(token, taskName);
   }
 
 
   @ApiOperation({
-    summary: "选择任务",
+    summary: "获取所有任务",
   })
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
-  @Post("filter")
+  @Get("getAllTask")
   filter(@Req() req: any, @Body("taskName") taskName = "") {
-    return this.taskService.filterTask(taskName);
+    const token = req.user.id;
+    return this.taskService.getAllTask(token);
   }
 
   @ApiOperation({
@@ -143,9 +152,8 @@ export default class TaskController {
   @ApiBearerAuth("JWT")
   @UseGuards(AuthGuard)
   @Post("updateTaskList")
-  updateTaskList(@Request() req, @Body() updateTaskDTO: TaskItemDTO) {
-    const token = req.user.id;
-    return this.taskService.updateTaskList(token, updateTaskDTO);
+  updateTaskList(@Request() req, @Body() updateTaskDTO: UpdateTaskListItemDTO) {
+    return this.taskService.updateTaskList(updateTaskDTO);
   }
 
   @ApiOperation({
@@ -155,8 +163,30 @@ export default class TaskController {
   @UseGuards(AuthGuard)
   @Post("toggleTaskItemStatus")
   toggleTaskItemStatus(@Request() req, @Body() updateUserDTO:
-   any) {
-    const token = req.user.id;
-    return this.taskService.updateTaskItem(token, updateUserDTO);
+    UpdateTodoDTO) {
+    return this.taskService.updateTaskItem(updateUserDTO);
   }
+
+
+  /**
+   *
+   * @desription 修改任务列表
+   * @param {*} req
+   * @param {TaskItemDTO} updateUserDTO
+   * @return {*}
+   * @memberof UserController
+   */
+  // @ApiBearerAuth("JWT")
+  // @ApiOperation({
+  //   summary: "修改任务列表",
+  // })
+  // @Post("updateTaskItem")
+  // @UseGuards(AuthGuard)
+  // updateTaskItem(@Request() req, @Body() updateUserDTO: TaskItemDTO) {
+  //   const token = req.user.id;
+  //   return this.userService.updateTaskItem(token, updateUserDTO);
+  // }
+
+
+
 }

@@ -2,12 +2,14 @@ import { Column, CreateDateColumn, ObjectID, ObjectIdColumn, UpdateDateColumn } 
 
 export abstract  class CommonEntity {
   @CreateDateColumn({
-    comment:"创建时间"
+    comment:"创建时间",
+    select:false
   })
   createAt:Date
 
   @UpdateDateColumn({
-    comment:"更新时间"
+    comment:"更新时间",
+    select:false
   })
   updateAt:Date
 
