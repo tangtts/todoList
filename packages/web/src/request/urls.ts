@@ -1,4 +1,4 @@
-import {AxiosInstance} from "."
+import { AxiosInstance } from "."
 export namespace UserUrl {
 
   export const LoginUrl = 'user/login'
@@ -6,24 +6,27 @@ export namespace UserUrl {
   export const InfoUrl = 'user/info'
 
   export const taskSearchItemUrl = 'user/searchTaskItem'
-  export const uploadUrl =  AxiosInstance.defaults.baseURL + '/user/upload'
-  export const updateUrl =  'user/update'
-  
-  
-} 
-export namespace TaskUrl{
-  
-  export const addTaskUrl =  'task/add'
-  export const findAllTaskItemUrl =  'task/findAllTaskItem'
+  export const uploadUrl = AxiosInstance.defaults.baseURL + '/user/upload'
+  export const updateUrl = 'user/update'
 
-  export const taskUpdateListUrl = 'task/updateTaskList'
 
-  export const taskAddItemUrl = 'task/addTaskItem'
-  export const getAllTask =  'task/getAllTask'
-  export const changeTaskMarkedUrl =  'task/mark'
-  export const toggleTaskItemStatusUrl =  'task/toggleTaskItemStatus'
-  export const getComplatedUrl =  'task/getAllComplated'
-  export const getAllMarkedUrl =  'task/getAllMarked'
-  export const deleteOneTaskUrl =  'task/deleteOneTask'
-  export const deleteTaskList =  'task/deleteTaskList'
+}
+export namespace TaskUrl {
+
+  export const addTaskUrl = 'group/addGroup'
+  export const findAllTaskItemUrl = 'todo/getTodo'
+  export const getAllTask = 'group/getGroup'
+  export const taskUpdateListUrl = 'group/updateGroup'
+  export const getAllComplete = 'group/getAllComplete'
+  export const getAllMarked = 'group/getAllMarked'
+  
+  export const deleteOneGroup = 'group/deleteGroup'
+
+  
+
+  export const taskAddItemUrl = 'todo/addTodo'
+  export const toggleGroupStatus = 'todo/toggleStatus'
+  export const deleteOneTodo = 'todo/deleteTodo'
+
+  export const changeTaskMarkedUrl = 'task/mark'
 }

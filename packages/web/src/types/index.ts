@@ -55,23 +55,22 @@ export interface ISideItem {
 }
 
 // 过滤任务
-export type FilterTaskResponse  = CommonResponse<ITaskSide[]>; 
+export type FilterTaskResponse  = CommonResponse<IGroup[]>; 
 
 
 // 过滤任务
-export type FilterTaskItemResponse  = CommonResponse<ITaskItem[]>; 
-export interface ITaskSide {
-  id:number,
-  taskName: string,
+export type FilterTaskItemResponse  = CommonResponse<ITodo[]>; 
+export interface IGroup {
+  groupId:number,
+  groupName: string,
   count:number
   icon?:React.ReactNode,
 }
 
 
-export interface ITaskItem {
-  taskItemId:number
-  id:number,
-  taskItemName: string,
-  isComplated: boolean,
+export interface ITodo {
+  todoId:number
+  todoContent: string,
+  isCompleted: 0 | 1,
   isMarked: boolean,
 }

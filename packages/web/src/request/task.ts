@@ -1,5 +1,5 @@
 import { requset } from ".";
-import { FilterTaskItemResponse, FilterTaskResponse, ITaskItem } from "../types";
+import { FilterTaskItemResponse, FilterTaskResponse, ITodo } from "../types";
 import { TaskUrl } from "./urls";
 
 
@@ -28,13 +28,31 @@ export function fetchAddTaskItem(data:any){
 export function fetchFindAllTaskItem(data:any){
   return requset<FilterTaskItemResponse>({
     url:TaskUrl.findAllTaskItemUrl,
-    method:"Post",
+    method:"GET",
     data
   })
 }
 
 
-export function fetchAllTask(data:{taskName:string}){
+export function fetchAllComplete(){
+  return requset<FilterTaskItemResponse>({
+    url:TaskUrl.getAllComplete,
+    method:"GET",
+  })
+}
+
+export function fetchAllMarked(){
+  return requset<FilterTaskItemResponse>({
+    url:TaskUrl.getAllMarked,
+    method:"GET",
+  })
+}
+
+
+
+
+
+export function fetchGroup(data:{groupName:string}){
   return requset<FilterTaskResponse>({
     url:TaskUrl.getAllTask,
     method:"Get",
@@ -50,40 +68,30 @@ export function fetchChangeTaskMarked(data:{id:number,isMarked:boolean}){
   })
 }
 
-export function fetchChangeTaskStatus(data:
-  Pick<ITaskItem,'isComplated' | 'isMarked' | 'id'> ){
+export function fetchChangeStatus(data: any
+  ){
   return requset<FilterTaskResponse>({
-    url:TaskUrl.toggleTaskItemStatusUrl,
-    method:"Post",
-    data
-  })
-}
-
-export function fetchComplatedTask(){
-  return requset<any>({
-    url:TaskUrl.getComplatedUrl
-  })
-}
-
-export function fetchMarkedTask(){
-  return requset<any>({
-    url:TaskUrl.getAllMarkedUrl
-  })
-}
-
-export function deleteOneTask(data){
-  return requset<any>({
-    url:TaskUrl.deleteOneTaskUrl,
-    method:"Post",
+    url:TaskUrl.toggleGroupStatus,
+    method:"get",
     data
   })
 }
 
 
-export function deleteTaskList(data){
+
+export function deleteOneTodo(data){
   return requset<any>({
-    url:TaskUrl.deleteTaskList,
-    method:"Post",
+    url:TaskUrl.deleteOneTodo,
+    method:"get",
+    data
+  })
+}
+
+
+export function deleteOneGroup(data){
+  return requset<any>({
+    url:TaskUrl.deleteOneGroup,
+    method:"get",
     data
   })
 }

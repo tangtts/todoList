@@ -1,54 +1,28 @@
 import React, { useEffect, useRef, useState } from "react"
 import Search from "antd/es/input/Search";
-import { Divider, Dropdown, Input, InputRef, MenuProps, message } from "antd";
-import { ISideItem, ITaskItem, ITaskSide } from "../types";
+import { Button, Divider, Dropdown, Input, InputRef, MenuProps, Space, message, } from "antd";
+import { Spin } from "antd";
+import { ISideItem, ITodo, IGroup } from "../types";
 import { ArrowDownOutlined, ArrowRightOutlined, CalendarTwoTone, CheckCircleOutlined, ClockCircleOutlined, PlusOutlined, StarFilled, StarOutlined, ToolFilled } from "@ant-design/icons";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 import {
-  deleteTaskList,
+  deleteOneGroup,
   fetchAddTask,
-  fetchChangeTaskMarked, fetchChangeTaskStatus, fetchComplatedTask,
-  fetchMarkedTask, deleteOneTask, fetchAddTaskItem, fetchFindAllTaskItem, fetchAllTask
+  fetchAllMarked, fetchChangeStatus,
+  deleteOneTodo, fetchAddTaskItem, fetchFindAllTaskItem, fetchGroup,
+  fetchAllComplete
 } from "../request/task"
-type ISideChoose = Pick<ITaskSide, 'id' | "taskName">
+
+type IGroupChoose = Pick<IGroup, 'groupId' | "groupName">;
+
 const IndexPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
-
-  // 初始化
-  const init = () => {
-    fetchTaskList()
-    fetchComplatedList()
-    fetchMarkedList()
-  }
-
   useEffect(() => {
-    init()
+    getGroup()
+    // 获取所有已完成任务
+    getAllComplete(true)
+    getAllMarked(true)
   }, [])
-
-
-  // 侧边
-  const [sideList, setSideList] = useState<ITaskSide[]>([]);
-
-  // 设置单个item
-  const [toDoData, setToDoData] = useState<ITaskItem[]>([])
-  const [doneData, setDoneData] = useState<ITaskItem[]>([])
-
-  const [chooseTask, setChooseTask] = useState<ISideChoose>();
-  // 在标记的时候不需要使用动画
-  const [useAnimate, setUseAnimate] = useState<boolean>(true)
-  const [complatedCount, setComplatedCount] = useState<number>(0)
-  const [markedCount, setMarkedCount] = useState<number>(0)
-
-
-  // 输入框的任务名
-  const [taskItemName, setItemTaskName] = useState('')
-
-  // 已完成 汉字翻转
-  const [isFold, setFold] = useState(false)
-  // 每一个side 的输入框
-  const inputRef = useRef<InputRef>(null)
-  // 侧边输入框状态
-  const [sideInputStatus, setSideInputStatus] = useState(false)
 
   const menuSide: MenuProps['items'] = [
     {
@@ -61,30 +35,89 @@ const IndexPage = () => {
     }
   ];
 
+  // 侧边todoGroup
+  const [group, setGroup] = useState<IGroup[]>([]);
+
+  const [toDoData, setToDoData] = useState<ITodo[]>([])
+  // 选择的哪个任务
+  const [chooseTask, setChooseTask] = useState<IGroupChoose>();
+  // 在标记的时候不需要使用动画
+  const [useAnimate, setUseAnimate] = useState(true)
+
+  const [completeCount, setCompleteCount] = useState(0)
+  const [markedCount, setMarkedCount] = useState(0)
+  
+  const [loading, setLoadiong] = useState<boolean>(false)
+
+  // 输入框的任务名
+  const [todoContent, setTodoContent] = useState('')
+  // 分组名
+  const [groupName, setGroupName] = useState('')
+  // 已完成 汉字翻转
+  const [isFold, setFold] = useState(false)
+  // 每一个side 的输入框
+  const inputRef = useRef<InputRef>(null)
+  // 侧边输入框状态
+  const [groupInputStatus, setGroupInputStatus] = useState(false)
+
   /**
    *
-   * 查询侧边任务
-   * @param {string} [taskName='']
+   * 查询分组任务
+   * @param {string} [groupName='']
    */
-  function fetchTaskList(taskName = '') {
-    fetchAllTask({ taskName }).then(res => {
+  function getGroup(groupName: string = '') {
+    fetchGroup({ groupName }).then(res => {
       if (res.code == 200) {
-        setSideList(res.data)
+        setGroup(res.data)
       }
     });
   }
 
+  //  如果是 初始化，无需调用todo,只需要获取数量
+  //  如果是 点击分组，需要调用todo
+  function getAllComplete(isInit = false) {
+    fetchAllComplete().then(res => {
+      if (res.code == 200) {
+        if (isInit) {
+          setToDoData(res.data)
+        }
+        setCompleteCount(res.data.length)
+      }
+    })
+  }
+
+ 
+  function getAllMarked(isInit = false) {
+    fetchAllMarked().then(res => {
+      if (res.code == 200) {
+        if (isInit) {
+          setToDoData(res.data)
+        }
+        setMarkedCount(res.data.length)
+      }
+    })
+  }
 
 
-  const handleMenuClick = (e, taskId) => {
+
+
+
+  const handleMenuClick = (e, groupId: number, index: number) => {
     if (e.key == 1) {
-      deleteTaskList({ taskId }).then(res => {
+      deleteOneGroup({ groupId }).then(res => {
         if (res.code == 200) {
-          init()
+          messageApi.success('删除成功');
+          getGroup()
+          setToDoData([]);
+          getAllComplete();
+          // 如果还有分组，则直接跳转到下一个分组
+          if (group.length) {
+            setChooseTask({ groupId: group[index + 1].groupId, groupName: group[index + 1].groupName });
+          }
         }
       })
     } else if (e.key == 2) {
-      setSideInputStatus(true)
+      setGroupInputStatus(true)
       inputRef.current?.focus({
         cursor: 'end'
       })
@@ -93,53 +126,39 @@ const IndexPage = () => {
 
   /**
    *
-   * 选择侧边的一个
-   * @param {ISideChoose} task
+   * 选择分组
+   * @param {IGroupChoose} task
    */
-  const menuClick = (task: ISideChoose) => {
-    console.log("🚀 ~ menuClick ~ task:", task);
+  const menuClick = (task: IGroupChoose) => {
     setChooseTask(task)
-    getFilterTask()
   }
 
-
-  // 起始列表第一项
-  const index = useRef(0);
-  const addList = () => {
-    let o = {
-      taskName: `任务列表${index.current++}`,
-    };
-    fetchAddTask(o).then(res => {
+  const addGroup = () => {
+    fetchAddTask({ groupName }).then(res => {
       if (res.code == 200) {
-        // 重新调一次获取所有侧边
-        fetchTaskList()
+        getGroup()
+        setGroupName('')
       }
     });
   };
 
 
-  function checkShouldOperate() {
-    if (chooseTask?.id) {
-      return ![1, 2].includes(chooseTask?.id)
-    }
+  function checkShouldOperate(): boolean {
     return true
   }
-
-
-
 
   /**
    *
    * 删除一个 item
-   * @param {*} taskItemId
+   * @param {number} todoId
    */
-  const handleTodoItemClick = (taskItemId) => {
+  const handleTodoItemClick = (todoId: number) => {
     if (!checkShouldOperate()) return
-    deleteOneTask({ taskItemId }).then(res => {
+    deleteOneTodo({ todoId }).then(res => {
       if (res.code == 200) {
-        getFilterTask()
-        init()
-
+        getTodoListByGroupId();
+        getAllComplete()
+        getGroup()
       }
     })
   }
@@ -147,116 +166,84 @@ const IndexPage = () => {
   /**
    *
    * 切换 单个item 的完成状态
-   * @param {ITaskItem} chosenItem
+   * @param {ITodo} chosenItem
    */
   const changeStatus = (
-    chosenItem: Pick<ITaskItem, 'isComplated' | 'isMarked' | 'id'>,
-    type: "complated" | 'marked'
+    chosenItem: Pick<ITodo, 'isCompleted' | 'isMarked' | 'todoId'>,
+    type: "completed" | 'marked'
   ) => {
-    // if (!checkShouldOperate()) return
     setUseAnimate(true)
-    fetchChangeTaskStatus({
-      id: chosenItem.id,
-      isComplated: type == "complated" ? !chosenItem.isComplated : chosenItem.isComplated,
-      isMarked: type == "marked" ? !chosenItem.isMarked : chosenItem.isMarked,
+    fetchChangeStatus({
+      todoId: chosenItem.todoId,
+      type: type == "completed" ? 1 : 2
     }).then(res => {
       if (res.code == 200) {
-        getFilterTask()
+        getTodoListByGroupId()
+        if(type == "completed"){
+          getAllComplete()
+        }else if(type == "marked") {
+          getAllMarked()
+        }
       }
     })
   }
 
   useEffect(() => {
-    if (checkShouldOperate()) {
-      getFilterTask()
-    }
+    getTodoListByGroupId()
   }, [
-    chooseTask?.id
+    chooseTask?.groupId
   ])
 
   /**
-  * @description 根据id获取对应的最新右边task
+  * @description 根据id获取对应的todo
   */
-  const getFilterTask = () => {
-    console.log("🚀 ~ getFilterTask ~ chooseTask:", chooseTask);
-    if (!chooseTask?.id) return;
-    fetchFindAllTaskItem({ taskId: chooseTask.id }).then(res => {
+  const getTodoListByGroupId = () => {
+    setLoadiong(true)
+    if (!chooseTask?.groupId) return;
+    fetchFindAllTaskItem({ groupId: chooseTask.groupId }).then(res => {
       if (res.code == 200) {
         const data = res.data;
-        setToDoData(data.filter(item => !item.isComplated))
-        setDoneData(data.filter(item => item.isComplated))
+        setToDoData(data);
       }
+    }).finally(() => {
+      setLoadiong(false)
     })
   }
 
   /**
  * @description 新增任务
  */
-  const addTaskItem = () => {
-    if (!taskItemName.trim()) {
+  const addTodo = () => {
+    if (!todoContent.trim()) {
       return messageApi.open({
         type: 'warning',
         content: '请输入任务名称！',
       });
     }
 
-    if (chooseTask?.id) {
+    if (chooseTask?.groupId) {
       fetchAddTaskItem({
-        taskItemName,
-        taskId: chooseTask?.id
+        todoContent: todoContent,
+        groupId: chooseTask.groupId
       }).then(res => {
         if (res.code == 200) {
           // 获取最新的任务列表
-          getFilterTask()
-          
+          getTodoListByGroupId()
           // 更新侧边
-          fetchTaskList()
+          getGroup()
           // 更新侧边栏
-          setItemTaskName('')
+          setTodoContent('')
         }
       })
     }
   }
 
-  const fetchComplatedList = () => {
-    // 应该初始化是完成
-    fetchComplatedTask().then(res => {
-      setChooseTask({
-        id: 1,
-        taskName: "完成"
-      })
-      // 当点击完成时，todoData清空
-      setToDoData([])
-      setDoneData(res.data.tasks)
-      setComplatedCount(res.data.total)
-    })
-  }
-
-  const fetchMarkedList = (isClick = false) => {
-    if (isClick) {
-      fetchMarkedTask().then(res => {
-        setChooseTask({
-          id: 2,
-          taskName: "标记"
-        })
-        setToDoData([])
-        setDoneData(res.data.tasks)
-        setMarkedCount(res.data.total)
-      })
-    } else {
-      fetchMarkedTask().then(res => {
-        setMarkedCount(res.data.total)
-      })
-    }
-  }
-
-
-  const blur = (e: React.FocusEvent<HTMLInputElement, Element>, todo: ISideChoose) => {
-    setSideInputStatus(false)
+  const blur = (e: React.FocusEvent<HTMLInputElement, Element>, todo: IGroupChoose) => {
+    setGroupInputStatus(false)
   }
 
   const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    setSideInputStatus(true)
+    setGroupInputStatus(true)
   }
 
   return (
@@ -266,20 +253,21 @@ const IndexPage = () => {
           placeholder="input search text"
           size="large"
           allowClear
-          onSearch={(taskName) => fetchTaskList(taskName)}
+          onSearch={(taskName) => getGroup(taskName)}
         />
         <Divider className="divider"></Divider>
 
         <div>
           {/* 已完成 */}
-          <div className="side"
-            style={{
+
+          {/* style={{
               backgroundColor:
-                chooseTask?.id == 1 ?
+                chooseTask?.groupId == 1 ?
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
-            }}
-            onClick={() => fetchComplatedList()}
+            }} */}
+          <div className="side"
+            onClick={() => getAllComplete()}
           >
             <div className="w-[4px] h-4/5 mr-2 bg-blue-300 rounded-md"></div>
             <div className="flex items-center">
@@ -287,18 +275,18 @@ const IndexPage = () => {
               <p className="ml-4">已完成</p>
             </div>
             <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
-              {complatedCount}</span>
+              {completeCount}</span>
           </div>
 
           {/* 标记 */}
           <div className="side"
             style={{
               backgroundColor:
-                chooseTask?.id == 2 ?
+                chooseTask?.groupId == 2 ?
                   'rgb(96 165 250)' :
                   "rgb(191,219,254)"
             }}
-            onClick={() => fetchMarkedList(true)}
+            onClick={() => getAllMarked(true)}
           >
             <div className="w-[4px] h-4/5 mr-2 bg-blue-300 rounded-md"></div>
             <div className="flex items-center">
@@ -306,7 +294,8 @@ const IndexPage = () => {
               <p className="ml-4">标记</p>
             </div>
             <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
-              {markedCount}</span>
+              {markedCount}
+            </span>
           </div>
 
 
@@ -314,7 +303,7 @@ const IndexPage = () => {
           {/* 任务列表 */}
           <div>
             <TransitionGroup>
-              {sideList?.map((todo,index) => (
+              {group?.map((todo, index) => (
                 <CSSTransition
                   key={index}
                   timeout={500}
@@ -323,13 +312,13 @@ const IndexPage = () => {
                     <Dropdown
                       menu={{
                         items: menuSide,
-                        onClick: (e) => handleMenuClick(e, todo.id)
+                        onClick: (e) => handleMenuClick(e, todo.groupId, index)
                       }}
                       trigger={['contextMenu']}>
                       <div className="side"
                         style={{
                           backgroundColor:
-                            chooseTask?.id == todo.id ?
+                            chooseTask?.groupId == todo.groupId ?
                               'rgb(96 165 250)' :
                               "rgb(191,219,254)"
                         }}
@@ -341,9 +330,9 @@ const IndexPage = () => {
                         <div className="flex items-center">
                           <CalendarTwoTone />
                           {
-                            sideInputStatus
-                              ? <Input defaultValue={todo.taskName} onPressEnter={(e) => enter(e)} onBlur={(e) => blur(e, todo)} ref={inputRef}></Input>
-                              : <p className="ml-4">{todo.taskName}</p>
+                            groupInputStatus
+                              ? <Input defaultValue={todo.groupName} onPressEnter={(e) => enter(e)} onBlur={(e) => blur(e, todo)} ref={inputRef}></Input>
+                              : <p className="ml-4">{todo.groupName}</p>
                           }
                         </div>
                         <span className="bg-gray-200 ml-auto mr-2 rounded-full flex items-center justify-center w-6 font-thin aspect-square">
@@ -359,32 +348,37 @@ const IndexPage = () => {
           {/* 尾部 */}
           <div
             className="addList"
-            onClick={addList}>
-            <PlusOutlined />
-            <span className="ml-2">新建列表</span>
+          >
+            <Space.Compact>
+              <Input
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                onPressEnter={addGroup}></Input>
+              <Button className="bg-[#5f73c1]" type="primary" onClick={addGroup}>新建列表</Button>
+            </Space.Compact>
           </div>
         </div>
       </div>
       {/* 右侧 */}
       <div className="flex-1">
         {contextHolder}
+
         <div className="bg-[#5f73c1] p-8 flex flex-col h-full rounded-md">
-          <header className="text-white text-2xl">{chooseTask?.taskName}</header>
+          <header className="text-white text-2xl">{chooseTask?.groupName}</header>
           <main>
-            {/* todoData */}
             <TransitionGroup>   {
-              toDoData.map(todo => {
+              toDoData.filter(item => item.isCompleted == 0).map(todo => {
                 return <CSSTransition
                   timeout={500}
                   classNames={useAnimate ? 'toggleVisable' : ''}
-                  key={todo.taskItemId}>
+                  key={todo.todoId}>
                   <Dropdown menu={{
                     items: [
                       {
                         label: '删除',
                         key: '1',
                       }
-                    ], onClick: () => handleTodoItemClick(todo.taskItemId),
+                    ], onClick: () => handleTodoItemClick(todo.todoId),
                     disabled: !checkShouldOperate()
                   }} trigger={['contextMenu']}>
                     <div
@@ -393,15 +387,15 @@ const IndexPage = () => {
                       {/* 左边的圆球 */}
                       <div >
                         {
-                          todo.isComplated ? <CheckCircleOutlined /> : <ClockCircleOutlined />
+                          todo.isCompleted ? <CheckCircleOutlined /> : <ClockCircleOutlined />
                         }
                       </div>
                       <p className="ml-4 flex-1"
-                        onClick={() => changeStatus(todo, 'complated')}
-                      >{todo.taskItemName}</p>
+                        onClick={() => changeStatus(todo, 'completed')}
+                      >{todo.todoContent}</p>
 
                       <div className="ml-auto"
-                        onClick={(e) => {
+                        onClick={() => {
                           changeStatus(todo, 'marked')
                         }}>
                         {
@@ -422,39 +416,38 @@ const IndexPage = () => {
                   {
                     isFold ? <ArrowRightOutlined className="text-xl" /> : <ArrowDownOutlined className="text-xl" />
                   }
-                  <header className="ml-4">已完成({doneData.length})</header>
+                  <header className="ml-4">已完成({toDoData.filter(item => item.isCompleted == 1).length})</header>
                 </div>
               }
 
               <TransitionGroup>
                 {!isFold &&
-                  doneData.map(done => {
+                  toDoData.filter(item => item.isCompleted == 1).map(done => {
                     return (
 
                       <CSSTransition
                         timeout={500}
                         classNames={useAnimate ? 'toggleVisable' : ''}
-                        key={done.taskItemId}>
+                        key={done.todoId}>
                         <Dropdown menu={{
                           items: [
                             {
                               label: '删除',
                               key: '1',
                             }
-                          ], onClick: () => handleTodoItemClick(done.taskItemId), disabled: !checkShouldOperate()
+                          ], onClick: () => handleTodoItemClick(done.todoId), disabled: !checkShouldOperate()
                         }} trigger={['contextMenu']}>
                           <div
                             className="taskItem"
                           >
-                            {/* 左边的圆球 */}
                             <div className="">
                               {
-                                done.isComplated ? <CheckCircleOutlined /> : <ClockCircleOutlined />
+                                done.isCompleted ? <CheckCircleOutlined /> : <ClockCircleOutlined />
                               }
                             </div>
                             <p className="ml-4 flex-1 leading-10"
-                              onClick={() => changeStatus(done, 'complated')}
-                            >{done.taskItemName}</p>
+                              onClick={() => changeStatus(done, 'completed')}
+                            >{done.todoContent}</p>
 
                             <div className="ml-auto  px-4"
                               onClick={(e) => {
@@ -475,9 +468,9 @@ const IndexPage = () => {
           </main>
           {
             <footer className="mt-auto">
-              <Input size="large" value={taskItemName}
-                onChange={(e) => setItemTaskName(e.target.value)}
-                onPressEnter={addTaskItem}></Input>
+              <Input size="large" value={todoContent}
+                onChange={(e) => setTodoContent(e.target.value)}
+                onPressEnter={addTodo}></Input>
             </footer>
           }
         </div>
@@ -485,6 +478,4 @@ const IndexPage = () => {
     </div>
   )
 }
-
-
 export default IndexPage
