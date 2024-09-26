@@ -1,8 +1,6 @@
 import React from "react";
 import { Button, Typography, Col, Form, Input, Row } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"
-// import a from ""
 import { LoginParmas } from "../types";
 import { fetchLogin } from "../request/user";
 import { AlertTwoTone, LockOutlined, UserOutlined } from "@ant-design/icons";
@@ -79,7 +77,7 @@ const Login: React.FC = () => {
             label="密码"
             name="password"
             rules={[
-              { type: "string", min: 3, max: 6,message:"密码长度必须在3位到6位之间" },
+              { type: "string", min: 3, max: 6, message: "密码长度必须在3位到6位之间" },
               { required: true, message: "请输入密码" },
             ]}>
             <Input.Password placeholder="请输入密码" className="h-12" prefix={<LockOutlined />} />
@@ -96,7 +94,6 @@ const Login: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
-
       </div>
     </div>
   );

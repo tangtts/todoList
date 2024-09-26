@@ -12,7 +12,8 @@ import {
 
 import { PartialType } from "@nestjs/mapped-types";
 
-export class UpdateUserDTO {
+export class UpdateUserDTO extends PartialType(CreateUserDTO){};
+export class UpdateUserDTO2 {
   @ApiProperty({ example: "好大鸭" })
   @IsString()
   nickName: string;
@@ -28,10 +29,6 @@ export class UpdateUserDTO {
   @Length(3, 6)
   @IsOptional()
   newPassword?: string;
-
-  // 不展示
-  @ApiHideProperty()
-  salt: string;
 
   @ApiProperty({
     example: "",

@@ -2,6 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .side {
+    @apply flex   
+    items-center 
+    py-2  
+    rounded-sm
+    transition-all
+    duration-150
+    hover:bg-gray-300
+    hover:cursor-pointer
+    mt-2
+    h-12;
+  }
+}
+
+.addList {
+  @apply flex 
+          items-center 
+         bg-[#f4f4f4] 
+          absolute 
+          bottom-1 
+          inset-x-0  p-2 
+          border-t-2
+          border-gray-300
+          hover:cursor-pointer
+          hover:bg-gray-200;
+}
+.divider {
+  @apply my-2 border-t-2 border-gray-600;
+}
+
+.taskItem {
+  @apply flex 
+  items-center 
+  hover:bg-white
+     rounded-md 
+    bg-[#eeeff3] 
+    mt-2
+    h-12
+    px-4
+    hover:cursor-pointer;
+}
+
+.arrawContainer{
+ @apply inline-flex px-4 py-1 rounded-md justify-between items-center  hover:cursor-pointer
+          bg-[#d0d6ee]
+          border-2
+          border-gray-200
+          hover:bg-white
+          
+}
+
 @layer utilities {
   .flex-center {
     display: flex;
@@ -32,11 +84,8 @@
   transition: opacity 500ms, transform 500ms;
 }
 
-
-
 .translateY-enter {
   opacity: 0;
-  
   transform: translateY(100px);
 }
 

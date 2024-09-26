@@ -15,6 +15,7 @@ export class CreateUserDTO {
 
   @ApiProperty({example:"123456"})
   @Length(3,6)
+  // 自定义 校验器
   @Validate(IsConfirmed,{message:"两次密码不一致"})
   password:string
  
@@ -26,13 +27,13 @@ export class CreateUserDTO {
   password_confirmed:string
   
 
-  @ApiProperty({
-    example:"",
-    description:"头像地址"
-  })
-  avatar:string
+  // @ApiProperty({
+  //   example:"",
+  //   description:"头像地址"
+  // })
+  // avatar:string
 
   // 不展示
- @ApiHideProperty()
-  salt:string
+//  @ApiHideProperty()
+//   salt:string
 }

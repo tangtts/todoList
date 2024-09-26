@@ -12,42 +12,40 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   PrimaryColumn,
-  ObjectID
+  ObjectID,
+  OneToMany
 } from "typeorm";
-import { TaskItemDTO } from "../dtos/task-item.dto";
 @Entity('users')
 export class UserEntity extends CommonEntity{
 
-  @ObjectIdColumn()
-  _id: ObjectID;
+  @PrimaryGeneratedColumn()
+  userId: number;
 
   // 昵称
   @Column("text")
   nickName: string;
 
   // 手机号
-  @Column("text")
+  @Column({
+    type:"varchar",
+    length: 150,
+    unique: true,
+  })
   phoneNumber: string;
 
   //密码
-  @Column("text")
+  @Column({
+   type:"text"
+  })
   password: string;
 
   // 头像
-  @Column("text")
+  @Column({
+    type:"varchar",
+    default:""
+  })
   avatar:string
-
-  @Column({type: 'json', nullable: true})
-  taskList:TaskItemDTO[]
   
   @Column()
-  complatedCount:number
-
-  @Column()
-  markedCount:number
-
-  @Column({
-    select:false
-  })
   salt: string;
 }

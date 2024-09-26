@@ -2,29 +2,27 @@ import { SearchUserDTO } from "./../dtos/search-user.dto";
 import { UpdateUserDTO } from "./../dtos/update-user.dto";
 import { UserEntity } from "src/user/entities/user.entity";
 import { CreateUserDTO } from "./../dtos/create-user.dto";
-import { ObjectId } from "mongodb";
 import {
   Injectable,
   Inject,
   NotFoundException,
   UnauthorizedException,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from "@nestjs/common";
-import { MongoRepository } from "typeorm";
+import {  Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { encrytPassword, makeSalt } from "src/shared/utils/cryptogram.util";
 import { LoginDTO } from "../dtos/login-user.dto";
 import { JwtService } from "@nestjs/jwt";
 import { UploadService } from "src/shared/upload/upload.service";
-import { deleteProperty } from "src/shared/utils/deleteNoUserdProperty";
-import { TaskItemDTO } from "../dtos/task-item.dto";
-import { TaskEntity } from "../entities/task.entity";
+
 @Injectable()
 export default class UserService {
   constructor(
     @InjectRepository(UserEntity)
-    private readonly userRepository: MongoRepository<UserEntity>,
-    @InjectRepository(TaskEntity)
-    private readonly taskRepository: MongoRepository<TaskEntity>,
+    private readonly userRepository: Repository<UserEntity>,
+    
     private readonly jwtService: JwtService,
     private readonly uploadService: UploadService
   ) {}
@@ -35,23 +33,24 @@ export default class UserService {
    * @param {CreateUserDTO} user
    * @returns {Promise<UserEntity>}
    */
+  @UseInterceptors(ClassSerializerInterceptor)
   async register(user: CreateUserDTO) {
     const isExitUser = await this.userRepository.findOneBy({
       phoneNumber: user.phoneNumber,
     });
+
     if (isExitUser) {
       throw new UnauthorizedException("用户已存在");
     }
+
     // 创建 加密后的密码
     const { salt, hashPassword } = this.getPassword(user.password);
     let u = new UserEntity();
     u.salt = salt;
     u.password = hashPassword;
     u.phoneNumber = user.phoneNumber;
-    u.avatar = user.avatar;
-    u.taskList = [];
     u.nickName = user.nickName;
-    return this.userRepository.save(u);
+    return await this.userRepository.save(u);
   }
 
   /**
@@ -76,86 +75,15 @@ export default class UserService {
    * @param {string} id - 用户 ID
    * @return {{Promise<UserEntity>}} 用户信息
    */
-  async info(id: string) {
-    if (!(await this.findOneBy({ _id: ObjectId(id) }))) {
-      return new NotFoundException("用户不存在！");
-    }
-    const user = await this.userRepository.findOneBy(id);
-
+  async info(userId: number) {
     //始终为 1
-
-    let pipeline = [
-      {
-        $lookup: {
-          from: "taskDetails",
-          localField: "taskList.id",
-          foreignField: "taskId",
-          as: "tasks",
-        },
-      },
-      {
-        $unwind: "$tasks",
-      },
-      {
-        $project: {
-          _id: 1,
-          isComplated: "$tasks.isComplated",
-          nickName: 1,
-          avatar:1,
-          phoneNumber:1,
-          taskList:1
-        },
-      },
-      {
-        $group: {
-          _id:"$_id",
-          complateCount: { $sum: { $cond: ["$isComplated", 1, 0] } },
-          taskList: { $push: "$taskList" },
-          nickName: { $first: "$nickName" },
-          avatar: { $first: "$avatar" },
-          phoneNumber: { $first: "$phoneNumber" },
-        },
-      },
-    ];
-
-    let [result] = await this.userRepository.aggregate(pipeline).toArray();
-    console.log(result);
-
-    // const pipeline = [
-    //   {
-    //     $lookup: {
-    //       from: "taskDetails",
-    //       localField: "taskList.id",
-    //       foreignField: "taskId",
-    //       as: "tasks"
-    //     }
-    //   },
-    //   {
-    //     $unwind: "$tasks"
-    //   },
-    //   {
-    //     $project: {
-    //       _id: 0,
-    //       isComplated: "$tasks.isComplated",
-    //       nickName: '$users.nickName'
-    //     }
-    //   },
-    //   {
-    //     $group: {
-    //       _id: "$_id",
-    //       complateCount: { $sum: { $cond: [ "$isComplated", 1, 0 ] } },
-    //       complatedCount: { $first: '$complatedCount' },
-    //       taskList: { $push: '$taskList' },
-    //       nickName:{ $first: '$users.nickName' },
-    //       password:{ $first: '$password' },
-    //       avatar:{ $first: '$avatar' },
-    //       phoneNumber:{$first: '$phoneNumber'}
-    //     }
-    //   }
-    // ]
-    // let [result] =  await this.userRepository.aggregate(pipeline).toArray();
-    // console.log("🚀 ~ file: user.service.ts:129 ~ UserService ~ info ~ result:", result);
-    return user;
+    let r = null;
+    try {
+      r = await this.userRepository.findOneByOrFail({ userId });
+    } catch (error) {
+      new NotFoundException("用户不存在！");
+    }
+    return r;
   }
 
   /**
@@ -166,79 +94,14 @@ export default class UserService {
    * @param {UpdateUserDTO} user - 传入的用户信息
    * @return {{Promise<UserEntity>}} 更新之后的用户信息
    */
-  async update(id: string, user: UpdateUserDTO) {
-    let findUser = await this.findOneBy({ _id: ObjectId(id) });
+  async update(userId: string, updateUserDTO: UpdateUserDTO) {
+    let findUser = await this.findOneBy({ userId });
     if (!findUser) {
       return new NotFoundException("用户不存在！");
     }
-    // 说明要改密码
-    if (user.oldPassword) {
-      // 判断老密码是否正确
-      const oldEncrytPassword = encrytPassword(user.oldPassword, findUser.salt);
-
-      if (findUser.password !== oldEncrytPassword) {
-        throw new UnauthorizedException("认证失败");
-      }
-      const { salt, hashPassword } = this.getPassword(user.newPassword);
-      findUser.salt = salt;
-      findUser.password = hashPassword;
-    }
-    Object.entries(user).forEach(([k, v]) => {
-      if (v) {
-        findUser[k] = v;
-      }
-    });
-    const result = await this.userRepository.update(id, findUser);
+    delete updateUserDTO.password_confirmed;
+    const result = await this.userRepository.update(userId, updateUserDTO);
     return result.affected;
-  }
-
-  /**
-   *
-   * @description 添加侧边栏任务
-   * @param {string} id
-   * @param {TaskItemDTO} todoItem
-   * @memberof UserService
-   */
-  async addTaskItem(id: string, todoItem: TaskItemDTO) {
-    deleteProperty(["id"], todoItem);
-    let findUser = await this.findOneBy({ _id: ObjectId(id) });
-    // 产生唯一id
-    todoItem.id = Date.now();
-    findUser.taskList.push(todoItem);
-    await this.update(id, findUser);
-    return todoItem;
-  }
-
-  /**
-   *
-   * @description 修改侧边栏任务
-   * @param {string} id
-   * @param {TaskItemDTO} todoItem
-   * @memberof UserService
-   */
-  async updateTaskItem(id: string, todoItem: TaskItemDTO) {
-    let findUser = await this.findOneBy({ _id: ObjectId(id) });
-    findUser.taskList = findUser.taskList.map(task => {
-      if (task.id == todoItem.id) {
-        return {
-          ...task,
-          ...todoItem,
-        };
-      } else {
-        return task;
-      }
-    });
-
-    await this.userRepository.update(id, findUser);
-
-    return findUser.taskList;
-  }
-
-  async searchTask(id: string, searchUserDTO: SearchUserDTO) {
-    let findUser = await this.findOneBy({ _id: ObjectId(id) });
-    return findUser.taskList.filter(task => {
-      return new RegExp(searchUserDTO.taskName).test(task.txt);
-    });
   }
 
   /**
@@ -255,11 +118,11 @@ export default class UserService {
   /**
    *
    * @description 上传图片，返回本地图片链接
-   * @param {*} file
+   * @param {Express.Multer.File} file
    * @return {object} {data:图片url}
    * @memberof UserService
    */
-  async uploadAvatar(file) {
+  async uploadAvatar(file:Express.Multer.File) {
     const { url } = await this.uploadService.upload(file);
     return { path: "http://localhost:3000" + url };
   }
@@ -275,7 +138,7 @@ export default class UserService {
 
   private async certificate(user: UserEntity) {
     const payload = {
-      id: user._id,
+      id: user.userId,
     };
     const token = this.jwtService.signAsync(payload);
     return token;
@@ -297,6 +160,7 @@ export default class UserService {
     if (!user) {
       throw new NotFoundException("用户不存在");
     }
+
     const { password: dbPassword, salt } = user;
     const currentHashPassword = encrytPassword(password, salt);
 

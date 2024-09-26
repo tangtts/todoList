@@ -1,14 +1,16 @@
 import { Column, CreateDateColumn, ObjectID, ObjectIdColumn, UpdateDateColumn } from "typeorm"
 
-export class CommonEntity {
-
-  @ObjectIdColumn()
-  _id: ObjectID;
-
-  @CreateDateColumn()
+export abstract  class CommonEntity {
+  @CreateDateColumn({
+    comment:"创建时间",
+    select:false
+  })
   createAt:Date
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    comment:"更新时间",
+    select:false
+  })
   updateAt:Date
 
   @Column({

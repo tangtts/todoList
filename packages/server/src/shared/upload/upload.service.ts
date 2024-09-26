@@ -24,6 +24,7 @@ export class UploadService {
     const fileName = currentSign + fileType;
 
     const uploadPath = uploadDir + "/" + fileName;
+    
     await outputFile(uploadPath, file.buffer);
 
     return {
