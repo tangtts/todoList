@@ -2,10 +2,12 @@
 
 import axios, { AxiosRequestConfig } from "axios";
 import { message } from "antd"
-import { Navigate, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux'
 // const navigate = useNavigate();
+import { setToken } from '../store/userSlice'
+
 export const AxiosInstance = axios.create({
-  baseURL: "http://127.0.0.1:8081",
+  baseURL: "http://1.94.207.116:8081",
 })
 
 const enum StatusCode {
@@ -27,6 +29,7 @@ AxiosInstance.interceptors.request.use((config) => {
 AxiosInstance.interceptors.response.use((response) => {
   console.log(response);
   if(response.data.code !== 200){
+    // return navigate("/login");
     message.error(response.data.msg)
   }
   return response;
@@ -34,7 +37,9 @@ AxiosInstance.interceptors.response.use((response) => {
   const errData = err.response.data;
   message.error(`${errData.code}:${errData.message}`);
   if (errData.code === StatusCode.Unauthorized) {
-    // return navigate("/login");
+    localStorage.setItem('token', '');
+    window.location.href = '/login';
+    return;
   }
 })
 
